@@ -15,17 +15,11 @@ import (
 var jwtKey = []byte("test")
 var tokenName = "token"
 
-type Claims struct {
-	UserName string `json:"username"`
-	UserType int    `json:"type"`
-	jwt.StandardClaims
-}
-
 func generateToken(w http.ResponseWriter, username string, userType int) {
 	tokenExpiryTime := time.Now().Add(5 * time.Minute)
 
 	//create claims with user data
-	claims := &Claims{
+	claims := &m.Claims{
 		UserName: username,
 		UserType: userType,
 		StandardClaims: jwt.StandardClaims{
@@ -88,7 +82,7 @@ func validateUserToken(r *http.Request, accessType int) bool {
 func validateTokenFromCookies(r *http.Request) (bool, string, int) {
 	if cookie, err := r.Cookie(tokenName); err == nil {
 		accessToken := cookie.Value
-		accessClaims := &Claims{}
+		accessClaims := &m.Claims{}
 		parsedToken, err := jwt.ParseWithClaims(accessToken, accessClaims, func(accessToken *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
 		})
