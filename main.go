@@ -30,12 +30,10 @@ import (
 	"core_chat/infra/serviceimpl"
 	"core_chat/web/rest"
 	"core_chat/web/rest/routes"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func configure() http.Handler {
@@ -59,8 +57,6 @@ func configure() http.Handler {
 }
 
 func main() {
-	bytes, _ := bcrypt.GenerateFromPassword([]byte("test"), bcrypt.DefaultCost)
-	fmt.Println(string(bytes))
 	handler := configure()
 	log.Println("Server running at :8888")
 	log.Fatal(http.ListenAndServe(":8888", handler))
