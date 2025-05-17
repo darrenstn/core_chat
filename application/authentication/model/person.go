@@ -1,7 +1,7 @@
 package model
 
-type Claims struct {
+type Person struct {
 	Identifier string
+	Password   string
 	Role       string
-	ExpiresAt  int64
 }

@@ -22,15 +22,15 @@ func NewAuthHandler(loginUC *usecase.LoginUseCase, logoutUC *usecase.LogoutUseCa
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// var req dto.LoginRequest
 	// json.NewDecoder(r.Body).Decode(&req)
-	username := r.FormValue("username")
+	identifier := r.FormValue("identifier")
 	password := r.FormValue("password")
 
 	req := dto.LoginRequest{
-		UserName: username,
-		Password: password,
+		Identifier: identifier,
+		Password:   password,
 	}
 
-	if ok := h.LoginUC.Execute(w, req.UserName, req.Password); !ok {
+	if ok := h.LoginUC.Execute(w, req.Identifier, req.Password); !ok {
 		rest.SendResponse(w, 400, "Invalid credentials")
 		return
 	}

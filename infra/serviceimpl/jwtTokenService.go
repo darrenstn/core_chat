@@ -13,30 +13,29 @@ func NewJWTTokenService() service.TokenService {
 	return &jwtTokenService{}
 }
 
-func (s *jwtTokenService) GenerateToken(username string, userType int) (string, error) {
+func (s *jwtTokenService) GenerateToken(identifier string, role string) (string, error) {
 	claims := jwt.MapClaims{
-		"username": username,
-		"type":     userType,
-		"exp":      time.Now().Add(5 * time.Minute).Unix(),
+		"identifier": identifier,
+		"role":       role,
+		"exp":        time.Now().Add(5 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte("test"))
 }
 
-func (s *jwtTokenService) ValidateToken(tokenStr string, requiredType int) (bool, string, int) {
+func (s *jwtTokenService) ValidateToken(tokenStr string, requiredRole string) (bool, string, string) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		return []byte("test"), nil
 	})
 	if err != nil || !token.Valid {
-		return false, "", -1
+		return false, "", ""
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		username, _ := claims["username"].(string)
-		typeFloat, _ := claims["type"].(float64)
-		userType := int(typeFloat)
-		if userType == requiredType {
-			return true, username, userType
+		identifier, _ := claims["identifier"].(string)
+		role, _ := claims["role"].(string)
+		if role == requiredRole {
+			return true, identifier, role
 		}
 	}
-	return false, "", -1
+	return false, "", ""
 }

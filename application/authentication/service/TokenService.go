@@ -1,6 +1,6 @@
 package service
 
 type TokenService interface {
-	GenerateToken(username string, userType int) (string, error)
-	ValidateToken(tokenString string, requiredType int) (bool, string, int)
+	GenerateToken(identifier string, role string) (string, error)
+	ValidateToken(tokenString string, role string) (bool, string, string)
 }

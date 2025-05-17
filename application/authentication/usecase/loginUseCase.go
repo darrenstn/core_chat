@@ -7,22 +7,22 @@ import (
 )
 
 type LoginUseCase struct {
-	UserRepo     repository.UserRepository
+	PersonRepo   repository.PersonRepository
 	TokenService service.TokenService
 	HashService  service.HashService
 	HTTPService  service.HTTPService
 }
 
-func NewLoginUseCase(repo repository.UserRepository, ts service.TokenService, hs service.HashService, hsrv service.HTTPService) *LoginUseCase {
-	return &LoginUseCase{UserRepo: repo, TokenService: ts, HashService: hs, HTTPService: hsrv}
+func NewLoginUseCase(repo repository.PersonRepository, ts service.TokenService, hs service.HashService, hsrv service.HTTPService) *LoginUseCase {
+	return &LoginUseCase{PersonRepo: repo, TokenService: ts, HashService: hs, HTTPService: hsrv}
 }
 
-func (uc *LoginUseCase) Execute(w http.ResponseWriter, username, password string) bool {
-	user, err := uc.UserRepo.GetUserByUsername(username)
-	if err != nil || !uc.HashService.CompareHash(user.Password, password) {
+func (uc *LoginUseCase) Execute(w http.ResponseWriter, identifier, password string) bool {
+	person, err := uc.PersonRepo.GetPersonByIdentifier(identifier)
+	if err != nil || !uc.HashService.CompareHash(person.Password, password) {
 		return false
 	}
-	token, err := uc.TokenService.GenerateToken(user.UserName, user.UserType)
+	token, err := uc.TokenService.GenerateToken(person.Identifier, person.Role)
 	if err != nil {
 		return false
 	}
