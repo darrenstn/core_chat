@@ -49,9 +49,12 @@ func configure() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/login", handler.Login).Methods("POST")
 	r.HandleFunc("/logout", handler.Logout).Methods("POST")
+	r.HandleFunc("/protected/email", routes.Authenticate(func(w http.ResponseWriter, r *http.Request) {
+		rest.SendResponse(w, 200, "Login and Email OK!")
+	}, "user", true)).Methods("GET")
 	r.HandleFunc("/protected", routes.Authenticate(func(w http.ResponseWriter, r *http.Request) {
 		rest.SendResponse(w, 200, "Login OK!")
-	}, "user", true)).Methods("GET")
+	}, "user", false)).Methods("GET")
 
 	return r
 }

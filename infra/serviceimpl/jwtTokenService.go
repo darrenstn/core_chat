@@ -24,7 +24,7 @@ func (s *jwtTokenService) GenerateToken(identifier string, role string, emailVal
 	return token.SignedString([]byte("test"))
 }
 
-func (s *jwtTokenService) ValidateToken(tokenStr string, requiredRole string, emailValidated bool) (bool, string, string, bool) {
+func (s *jwtTokenService) ValidateToken(tokenStr string, requiredRole string) (bool, string, string, bool) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		return []byte("test"), nil
 	})
@@ -35,7 +35,7 @@ func (s *jwtTokenService) ValidateToken(tokenStr string, requiredRole string, em
 		identifier, _ := claims["identifier"].(string)
 		role, _ := claims["role"].(string)
 		isEmailValidated, _ := claims["emailValidated"].(bool)
-		if role == requiredRole && isEmailValidated == emailValidated {
+		if role == requiredRole {
 			return true, identifier, role, isEmailValidated
 		}
 	}
