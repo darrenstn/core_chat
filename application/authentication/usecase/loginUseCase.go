@@ -22,7 +22,7 @@ func (uc *LoginUseCase) Execute(w http.ResponseWriter, identifier, password stri
 	if err != nil || !uc.HashService.CompareHash(person.Password, password) {
 		return false
 	}
-	token, err := uc.TokenService.GenerateToken(person.Identifier, person.Role)
+	token, err := uc.TokenService.GenerateToken(person.Identifier, person.Role, person.EmailValidated)
 	if err != nil {
 		return false
 	}

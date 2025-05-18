@@ -51,7 +51,7 @@ func configure() http.Handler {
 	r.HandleFunc("/logout", handler.Logout).Methods("POST")
 	r.HandleFunc("/protected", routes.Authenticate(func(w http.ResponseWriter, r *http.Request) {
 		rest.SendResponse(w, 200, "Login OK!")
-	}, "user")).Methods("GET")
+	}, "user", true)).Methods("GET")
 
 	return r
 }

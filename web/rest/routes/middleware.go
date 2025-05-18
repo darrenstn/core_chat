@@ -6,14 +6,14 @@ import (
 	"net/http"
 )
 
-func Authenticate(next http.HandlerFunc, role string) http.HandlerFunc {
+func Authenticate(next http.HandlerFunc, role string, emailValidated bool) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("token")
 		if err != nil {
 			rest.SendResponse(w, 400, "Missing token")
 			return
 		}
-		valid, _, _ := serviceimpl.NewJWTTokenService().ValidateToken(cookie.Value, role)
+		valid, _, _, _ := serviceimpl.NewJWTTokenService().ValidateToken(cookie.Value, role, emailValidated)
 		if !valid {
 			rest.SendResponse(w, 401, "Unauthorized")
 			return

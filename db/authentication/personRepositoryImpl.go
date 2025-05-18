@@ -15,8 +15,8 @@ func NewPersonRepository(db *sql.DB) repository.PersonRepository {
 }
 
 func (r *personRepositoryImpl) GetPersonByIdentifier(identifier string) (model.Person, error) {
-	row := r.db.QueryRow("SELECT identifier, password, role FROM person WHERE identifier=?", identifier)
+	row := r.db.QueryRow("SELECT identifier, password, role, email_validated FROM person WHERE identifier=?", identifier)
 	var person model.Person
-	err := row.Scan(&person.Identifier, &person.Password, &person.Role)
+	err := row.Scan(&person.Identifier, &person.Password, &person.Role, &person.EmailValidated)
 	return person, err
 }
