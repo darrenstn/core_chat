@@ -1,7 +1,0 @@
-package model
-
-type Claims struct {
-	Identifier string
-	Role       string
-	ExpiresAt  int64
-}

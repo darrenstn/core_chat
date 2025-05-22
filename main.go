@@ -41,10 +41,8 @@ func configure() http.Handler {
 	personRepo := authentication.NewPersonRepository(db)
 	tokenService := serviceimpl.NewJWTTokenService()
 	hashService := serviceimpl.NewBcryptHashService()
-	httpService := serviceimpl.NewHTTPService()
-	loginUC := usecase.NewLoginUseCase(personRepo, tokenService, hashService, httpService)
-	logoutUC := usecase.NewLogoutUseCase(httpService)
-	handler := routes.NewAuthHandler(loginUC, logoutUC)
+	loginUC := usecase.NewLoginUseCase(personRepo, tokenService, hashService)
+	handler := routes.NewAuthHandler(loginUC)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/login", handler.Login).Methods("POST")

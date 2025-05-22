@@ -1,32 +1,42 @@
 package usecase
 
 import (
+	"core_chat/application/authentication/dto"
+	"core_chat/application/authentication/mapper"
 	"core_chat/application/authentication/repository"
 	"core_chat/application/authentication/service"
-	"net/http"
+	"time"
 )
 
 type LoginUseCase struct {
 	PersonRepo   repository.PersonRepository
 	TokenService service.TokenService
 	HashService  service.HashService
-	HTTPService  service.HTTPService
 }
 
-func NewLoginUseCase(repo repository.PersonRepository, ts service.TokenService, hs service.HashService, hsrv service.HTTPService) *LoginUseCase {
-	return &LoginUseCase{PersonRepo: repo, TokenService: ts, HashService: hs, HTTPService: hsrv}
+func NewLoginUseCase(repo repository.PersonRepository, ts service.TokenService, hs service.HashService) *LoginUseCase {
+	return &LoginUseCase{PersonRepo: repo, TokenService: ts, HashService: hs}
 }
 
-func (uc *LoginUseCase) Execute(w http.ResponseWriter, identifier, password string) bool {
+func (uc *LoginUseCase) Execute(identifier, password string) dto.LoginResult {
 	person, err := uc.PersonRepo.GetPersonByIdentifier(identifier)
 	if err != nil || !uc.HashService.CompareHash(person.Password, password) {
-		return false
-	}
-	token, err := uc.TokenService.GenerateToken(person.Identifier, person.Role, person.EmailValidated)
-	if err != nil {
-		return false
+		return dto.LoginResult{Success: false, Message: "Invalid Credentials"}
 	}
 
-	uc.HTTPService.SetAuthCookie(w, token)
-	return true
+	expTime := time.Now().Add(5 * time.Minute)
+
+	claims := mapper.ToClaimsDTO(person, expTime.Unix())
+
+	token, err := uc.TokenService.GenerateToken(claims)
+	if err != nil {
+		return dto.LoginResult{Success: false, Message: "Failed to Generate Token"}
+	}
+
+	return dto.LoginResult{
+		Success:    true,
+		Token:      token,
+		Message:    "Login Successful",
+		Expiration: expTime,
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"core_chat/application/authentication/usecase"
 	"core_chat/web/rest"
 	"core_chat/web/rest/dto"
+	"core_chat/web/rest/util"
 
 	// "encoding/json"
 
@@ -11,12 +12,11 @@ import (
 )
 
 type AuthHandler struct {
-	LoginUC  *usecase.LoginUseCase
-	LogoutUC *usecase.LogoutUseCase
+	LoginUC *usecase.LoginUseCase
 }
 
-func NewAuthHandler(loginUC *usecase.LoginUseCase, logoutUC *usecase.LogoutUseCase) *AuthHandler {
-	return &AuthHandler{LoginUC: loginUC, LogoutUC: logoutUC}
+func NewAuthHandler(loginUC *usecase.LoginUseCase) *AuthHandler {
+	return &AuthHandler{LoginUC: loginUC}
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -30,14 +30,19 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Password:   password,
 	}
 
-	if ok := h.LoginUC.Execute(w, req.Identifier, req.Password); !ok {
-		rest.SendResponse(w, 400, "Invalid credentials")
+	result := h.LoginUC.Execute(req.Identifier, req.Password)
+
+	if !result.Success {
+		rest.SendResponse(w, 400, result.Message)
 		return
 	}
+
+	util.SetAuthCookie(w, result.Token, result.Expiration)
+
 	rest.SendResponse(w, 200, "Login success")
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	h.LogoutUC.Execute(w)
+	util.ClearAuthCookie(w)
 	rest.SendResponse(w, 200, "Logout success")
 }

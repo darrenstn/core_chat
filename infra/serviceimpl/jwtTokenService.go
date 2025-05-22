@@ -1,8 +1,8 @@
 package serviceimpl
 
 import (
+	"core_chat/application/authentication/dto"
 	"core_chat/application/authentication/service"
-	"time"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -13,12 +13,12 @@ func NewJWTTokenService() service.TokenService {
 	return &jwtTokenService{}
 }
 
-func (s *jwtTokenService) GenerateToken(identifier string, role string, emailValidated bool) (string, error) {
+func (s *jwtTokenService) GenerateToken(claimsData dto.Claims) (string, error) {
 	claims := jwt.MapClaims{
-		"identifier":     identifier,
-		"role":           role,
-		"emailValidated": emailValidated,
-		"exp":            time.Now().Add(5 * time.Minute).Unix(),
+		"identifier":     claimsData.Identifier,
+		"role":           claimsData.Role,
+		"emailValidated": claimsData.EmailValidated,
+		"exp":            claimsData.ExpiresAt,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte("test"))
