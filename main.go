@@ -42,11 +42,13 @@ func configure() http.Handler {
 	tokenService := serviceimpl.NewJWTTokenService()
 	hashService := serviceimpl.NewBcryptHashService()
 	loginUC := usecase.NewLoginUseCase(personRepo, tokenService, hashService)
-	handler := routes.NewAuthHandler(loginUC)
+	refreshUC := usecase.NewRefreshTokenUseCase(personRepo, tokenService)
+	handler := routes.NewAuthHandler(loginUC, refreshUC)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/login", handler.Login).Methods("POST")
 	r.HandleFunc("/logout", handler.Logout).Methods("POST")
+	r.HandleFunc("/token/refresh", routes.Authenticate(handler.RefreshToken, "user", false)).Methods("POST")
 	r.HandleFunc("/protected/email", routes.Authenticate(func(w http.ResponseWriter, r *http.Request) {
 		rest.SendResponse(w, 200, "Login and Email OK!")
 	}, "user", true)).Methods("GET")

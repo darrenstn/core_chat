@@ -3,6 +3,7 @@ package routes
 import (
 	"core_chat/infra/serviceimpl"
 	"core_chat/web/rest"
+	"core_chat/web/rest/util"
 	"net/http"
 )
 
@@ -13,7 +14,7 @@ func Authenticate(next http.HandlerFunc, role string, requireEmailValidated bool
 			rest.SendResponse(w, 400, "Missing token")
 			return
 		}
-		valid, _, _, isEmailValidated := serviceimpl.NewJWTTokenService().ValidateToken(cookie.Value, role)
+		valid, identifier, _, isEmailValidated := serviceimpl.NewJWTTokenService().ValidateToken(cookie.Value, role)
 		if !valid {
 			rest.SendResponse(w, 401, "Unauthorized")
 			return
@@ -25,6 +26,7 @@ func Authenticate(next http.HandlerFunc, role string, requireEmailValidated bool
 				return
 			}
 		}
-		next.ServeHTTP(w, r)
+		ctx := util.WithIdentifier(r.Context(), identifier)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

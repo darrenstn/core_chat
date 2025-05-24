@@ -11,6 +11,7 @@ func SetAuthCookie(w http.ResponseWriter, token string, expTime time.Time) {
 		Value:    token,
 		Expires:  expTime,
 		HttpOnly: true,
+		Path:     "/",
 	})
 }
 
@@ -20,5 +21,6 @@ func ClearAuthCookie(w http.ResponseWriter) {
 		Value:    "",
 		Expires:  time.Now(),
 		HttpOnly: true,
+		Path:     "/",
 	})
 }

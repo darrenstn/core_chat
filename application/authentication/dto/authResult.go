@@ -2,7 +2,7 @@ package dto
 
 import "time"
 
-type LoginResult struct {
+type AuthResult struct {
 	Success    bool
 	Token      string
 	Message    string

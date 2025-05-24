@@ -12,11 +12,12 @@ import (
 )
 
 type AuthHandler struct {
-	LoginUC *usecase.LoginUseCase
+	LoginUC   *usecase.LoginUseCase
+	RefreshUC *usecase.RefreshTokenUseCase
 }
 
-func NewAuthHandler(loginUC *usecase.LoginUseCase) *AuthHandler {
-	return &AuthHandler{LoginUC: loginUC}
+func NewAuthHandler(loginUC *usecase.LoginUseCase, refreshUC *usecase.RefreshTokenUseCase) *AuthHandler {
+	return &AuthHandler{LoginUC: loginUC, RefreshUC: refreshUC}
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -45,4 +46,23 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	util.ClearAuthCookie(w)
 	rest.SendResponse(w, 200, "Logout success")
+}
+
+func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	identifier, ok := util.GetIdentifier(r)
+
+	if !ok {
+		rest.SendResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	result := h.RefreshUC.Execute(identifier)
+	if !result.Success {
+		rest.SendResponse(w, http.StatusInternalServerError, result.Message)
+		return
+	}
+
+	util.SetAuthCookie(w, result.Token, result.Expiration)
+
+	rest.SendResponse(w, 200, "Refresh Token Success")
 }
