@@ -1,5 +1,5 @@
 package service
 
 type ImageService interface {
-	ResizeImage(path string, dstDir string, width, height int) error
+	ResizeImage(path string, dstDir string, width, height int) (string, error)
 }

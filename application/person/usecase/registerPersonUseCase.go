@@ -33,13 +33,17 @@ func (uc *RegisterPersonUseCase) Execute(req dto.RegisterRequest) dto.RegisterRe
 		return dto.RegisterResult{Success: false, Message: "Password not valid"}
 	}
 
+	newPicturePath := ""
+
 	if req.PicturePath != "" {
 		if err := uc.Antivirus.ScanImage(req.PicturePath); err != nil {
 			fmt.Println("Virus scan error:", err)
 			return dto.RegisterResult{Success: false, Message: "Profile picture failed virus scan"}
 		}
 
-		if err := uc.ImageSvc.ResizeImage(req.PicturePath, "image/profile", 300, 300); err != nil {
+		var err error
+
+		if newPicturePath, err = uc.ImageSvc.ResizeImage(req.PicturePath, "image/profile", 300, 300); err != nil {
 			fmt.Println("Resize image error:", err)
 			return dto.RegisterResult{Success: false, Message: "Failed to resize profile picture"}
 		}
@@ -59,7 +63,7 @@ func (uc *RegisterPersonUseCase) Execute(req dto.RegisterRequest) dto.RegisterRe
 		Email:       req.Email,
 		DateOfBirth: req.DateOfBirth,
 		Description: req.Description,
-		PicturePath: req.PicturePath,
+		PicturePath: newPicturePath,
 	}
 
 	if req.PicturePath == "" {

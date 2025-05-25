@@ -16,11 +16,11 @@ func NewImageService() service.ImageService {
 }
 
 // ResizeImage resizes an image at the given path to the specified width and height.
-func (s *ImageServiceImpl) ResizeImage(path string, dstDir string, width, height int) error {
+func (s *ImageServiceImpl) ResizeImage(path string, dstDir string, width, height int) (string, error) {
 	// Open the image file
 	src, err := imaging.Open(path)
 	if err != nil {
-		return errors.New("failed to open image: " + err.Error())
+		return "", errors.New("failed to open image: " + err.Error())
 	}
 
 	// Resize and overwrite
@@ -33,14 +33,14 @@ func (s *ImageServiceImpl) ResizeImage(path string, dstDir string, width, height
 	dstPath := filepath.Join(uploadDir, dstDir, filename)
 
 	if err := os.MkdirAll(filepath.Dir(dstPath), os.ModePerm); err != nil {
-		return errors.New("failed to create destination directory: " + err.Error())
+		return "", errors.New("failed to create destination directory: " + err.Error())
 	}
 
 	// Save the resized image (overwrite)
 	err = imaging.Save(dst, dstPath)
 	if err != nil {
-		return errors.New("failed to save resized image: " + err.Error())
+		return "", errors.New("failed to save resized image: " + err.Error())
 	}
 
-	return nil
+	return dstPath, nil
 }
