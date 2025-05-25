@@ -24,8 +24,10 @@
 package main
 
 import (
-	"core_chat/application/authentication/usecase"
+	authUC "core_chat/application/authentication/usecase"
+	personUC "core_chat/application/person/usecase"
 	"core_chat/db/authentication"
+	"core_chat/db/person"
 	"core_chat/infra/mysql"
 	"core_chat/infra/serviceimpl"
 	"core_chat/web/rest"
@@ -34,21 +36,44 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
+
+func loadEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+}
 
 func configure() http.Handler {
 	db := mysql.Connect()
-	personRepo := authentication.NewPersonRepository(db)
+
+	authPersonRepo := authentication.NewPersonRepository(db)
 	tokenService := serviceimpl.NewJWTTokenService()
 	hashService := serviceimpl.NewBcryptHashService()
-	loginUC := usecase.NewLoginUseCase(personRepo, tokenService, hashService)
-	refreshUC := usecase.NewRefreshTokenUseCase(personRepo, tokenService)
-	handler := routes.NewAuthHandler(loginUC, refreshUC)
+	loginUC := authUC.NewLoginUseCase(authPersonRepo, tokenService, hashService)
+	refreshUC := authUC.NewRefreshTokenUseCase(authPersonRepo, tokenService)
+	authHandler := routes.NewAuthHandler(loginUC, refreshUC)
+
+	personPersonRepo := person.NewPersonRepository(db)
+	validatorService := serviceimpl.NewValidatorService()
+	antivirusService := serviceimpl.NewAntivirusService()
+	imageService := serviceimpl.NewImageService()
+	emailAvailabilityUC := personUC.NewEmailAvailabilityUseCase(personPersonRepo, validatorService)
+	identifierAvailabilityUC := personUC.NewIdentifierAvailabilityUseCase(personPersonRepo, validatorService)
+	registerUC := personUC.NewRegisterPersonUseCase(personPersonRepo, hashService, antivirusService, validatorService, imageService)
+	personHandler := routes.NewPersonHandler(emailAvailabilityUC, identifierAvailabilityUC, registerUC)
 
 	r := mux.NewRouter()
-	r.HandleFunc("auth/login", handler.Login).Methods("POST")
-	r.HandleFunc("auth/logout", handler.Logout).Methods("POST")
-	r.HandleFunc("auth/token/refresh", routes.Authenticate(handler.RefreshToken, "user", false)).Methods("POST")
+	r.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
+	r.HandleFunc("/auth/logout", authHandler.Logout).Methods("POST")
+	r.HandleFunc("/auth/token/refresh", routes.Authenticate(authHandler.RefreshToken, "user", false)).Methods("POST")
+
+	r.HandleFunc("/person/identifier", personHandler.CheckIdentifierAvailability).Methods("GET")
+	r.HandleFunc("/person/email", personHandler.CheckEmailAvailability).Methods("GET")
+	r.HandleFunc("/person", personHandler.Register).Methods("POST")
+
 	r.HandleFunc("/protected/email", routes.Authenticate(func(w http.ResponseWriter, r *http.Request) {
 		rest.SendResponse(w, 200, "Login and Email OK!")
 	}, "user", true)).Methods("GET")
@@ -60,6 +85,7 @@ func configure() http.Handler {
 }
 
 func main() {
+	loadEnv()
 	handler := configure()
 	log.Println("Server running at :8888")
 	log.Fatal(http.ListenAndServe(":8888", handler))

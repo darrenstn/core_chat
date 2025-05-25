@@ -1,2 +1,7 @@
 /go.mod
 /go.sum
+/.env
+# Ignore everything in the upload folder
+upload/*
+# Except this one file to keep the folder in Git
+!upload/.gitkeep
