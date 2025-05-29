@@ -34,6 +34,7 @@ import (
 	"core_chat/web/rest/routes"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -63,7 +64,10 @@ func configure() http.Handler {
 	emailAvailabilityUC := personUC.NewEmailAvailabilityUseCase(personPersonRepo, validatorService)
 	identifierAvailabilityUC := personUC.NewIdentifierAvailabilityUseCase(personPersonRepo, validatorService)
 	registerUC := personUC.NewRegisterPersonUseCase(personPersonRepo, hashService, antivirusService, validatorService, imageService)
-	personHandler := routes.NewPersonHandler(emailAvailabilityUC, identifierAvailabilityUC, registerUC)
+	getProfileUC := personUC.NewGetProfileUseCase(personPersonRepo)
+	defaultProfileImagePath := os.Getenv("DEFAULT_PROFILE_IMAGE")
+	getProfileImageUC := personUC.NewGetProfileImageUseCase(personPersonRepo, imageService, defaultProfileImagePath)
+	personHandler := routes.NewPersonHandler(emailAvailabilityUC, identifierAvailabilityUC, registerUC, getProfileUC, getProfileImageUC)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
@@ -73,6 +77,8 @@ func configure() http.Handler {
 	r.HandleFunc("/person/identifier", personHandler.CheckIdentifierAvailability).Methods("GET")
 	r.HandleFunc("/person/email", personHandler.CheckEmailAvailability).Methods("GET")
 	r.HandleFunc("/person", personHandler.Register).Methods("POST")
+	r.HandleFunc("/person/profile", routes.Authenticate(personHandler.GetProfile, "user", false)).Methods("GET")
+	r.HandleFunc("/person/profile/image", routes.Authenticate(personHandler.GetProfileImage, "user", false)).Methods("GET")
 
 	r.HandleFunc("/protected/email", routes.Authenticate(func(w http.ResponseWriter, r *http.Request) {
 		rest.SendResponse(w, 200, "Login and Email OK!")

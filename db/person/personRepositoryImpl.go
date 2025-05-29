@@ -2,6 +2,7 @@ package person
 
 import (
 	"core_chat/application/person/entity"
+	"core_chat/application/person/model"
 	"core_chat/application/person/repository"
 	"database/sql"
 )
@@ -61,4 +62,23 @@ func (r *personRepositoryImpl) ExistsByIdentifier(identifier string) bool {
 	}
 
 	return true // Identifier exists
+}
+
+func (r *personRepositoryImpl) FindProfileByIdentifier(identifier string) (*model.Profile, error) {
+	var profile model.Profile
+	var description sql.NullString
+	err := r.db.QueryRow("SELECT identifier, name, description, picture_path FROM person WHERE identifier = ?", identifier).
+		Scan(&profile.Identifier, &profile.Name, &description, &profile.PicturePath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if description.Valid {
+		profile.Description = description.String
+	} else {
+		profile.Description = ""
+	}
+
+	return &profile, nil
 }

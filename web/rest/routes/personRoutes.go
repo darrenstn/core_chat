@@ -6,6 +6,7 @@ import (
 	"core_chat/web/rest/dto"
 	"core_chat/web/rest/mapper"
 	"core_chat/web/rest/util"
+	"os"
 	"time"
 
 	// "encoding/json"
@@ -17,10 +18,12 @@ type PersonHandler struct {
 	RegisterUC               *usecase.RegisterPersonUseCase
 	EmailAvailabilityUC      *usecase.EmailAvailabilityUseCase
 	IdentifierAvailabilityUC *usecase.IdentifierAvailabilityUseCase
+	GetProfileUC             *usecase.GetProfileUseCase
+	GetProfileImageUC        *usecase.GetProfileImageUseCase
 }
 
-func NewPersonHandler(emailAvailabilityUC *usecase.EmailAvailabilityUseCase, identifierAvailabilityUC *usecase.IdentifierAvailabilityUseCase, registerUC *usecase.RegisterPersonUseCase) *PersonHandler {
-	return &PersonHandler{EmailAvailabilityUC: emailAvailabilityUC, IdentifierAvailabilityUC: identifierAvailabilityUC, RegisterUC: registerUC}
+func NewPersonHandler(emailAvailabilityUC *usecase.EmailAvailabilityUseCase, identifierAvailabilityUC *usecase.IdentifierAvailabilityUseCase, registerUC *usecase.RegisterPersonUseCase, getProfileUC *usecase.GetProfileUseCase, getProfileImageUC *usecase.GetProfileImageUseCase) *PersonHandler {
+	return &PersonHandler{EmailAvailabilityUC: emailAvailabilityUC, IdentifierAvailabilityUC: identifierAvailabilityUC, RegisterUC: registerUC, GetProfileUC: getProfileUC, GetProfileImageUC: getProfileImageUC}
 }
 
 func (h *PersonHandler) CheckIdentifierAvailability(w http.ResponseWriter, r *http.Request) {
@@ -123,4 +126,42 @@ func (h *PersonHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rest.SendResponse(w, 200, result.Message)
+}
+
+func (h *PersonHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	identifier := r.URL.Query().Get("identifier")
+	if identifier == "" {
+		rest.SendResponse(w, 400, "Identifier is required")
+		return
+	}
+
+	result := h.GetProfileUC.Execute(identifier)
+	if !result.Success {
+		rest.SendResponse(w, 400, result.Message)
+		return
+	}
+
+	imageProfileUrl := os.Getenv("IMAGE_PROFILE_URL")
+
+	profileUrl := imageProfileUrl + "?identifier=" + result.Identifier
+
+	profileResult := mapper.ToProfileResult(result, profileUrl, 200)
+
+	rest.SendJSON(w, profileResult)
+}
+
+func (h *PersonHandler) GetProfileImage(w http.ResponseWriter, r *http.Request) {
+	identifier := r.URL.Query().Get("identifier")
+	if identifier == "" {
+		rest.SendResponse(w, 400, "Identifier is required")
+		return
+	}
+
+	result := h.GetProfileImageUC.Execute(identifier)
+	if !result.Success {
+		rest.SendResponse(w, 404, result.Message)
+		return
+	}
+
+	http.ServeFile(w, r, result.PicturePath)
 }

@@ -1,7 +1,18 @@
 /go.mod
 /go.sum
 /.env
-# Ignore everything in the upload folder
+
+# Ignore everything in upload/
 upload/*
-# Except this one file to keep the folder in Git
-!upload/.gitkeep
+
+# Allow specific subdirectories and files
+!upload/image/
+!upload/image/profile/
+!upload/image/profile/default.png
+
+# Re-ignore everything else in profile
+upload/image/profile/*
+!upload/image/profile/default.png
+
+# Explicitly ignore tempprofile directory
+upload/image/tempprofile/

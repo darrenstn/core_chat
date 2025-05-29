@@ -5,11 +5,12 @@ import (
 	"core_chat/application/authentication/mapper"
 	"core_chat/application/authentication/model"
 	"core_chat/application/authentication/service"
+	"core_chat/config"
 	"time"
 )
 
 func generateAuthResult(person model.Person, tokenService service.TokenService, successMessage string) dto.AuthResult {
-	expTime := time.Now().Add(5 * time.Minute)
+	expTime := time.Now().Add(config.AccessTokenExpiration)
 	claims := mapper.ToClaimsDTO(person, expTime.Unix())
 
 	token, err := tokenService.GenerateToken(claims)

@@ -44,3 +44,11 @@ func (s *ImageServiceImpl) ResizeImage(path string, dstDir string, width, height
 
 	return dstPath, nil
 }
+
+func (s *ImageServiceImpl) GetProfileImagePathOrDefault(path string, fallback string) string {
+	info, err := os.Stat(path)
+	if err == nil && !info.IsDir() {
+		return path
+	}
+	return fallback
+}
