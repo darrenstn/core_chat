@@ -1,24 +1,39 @@
 package serviceimpl
 
 import (
-	"core_chat/application/person/service"
+	chatservice "core_chat/application/chat/service"
+	personservice "core_chat/application/person/service"
 	"errors"
 	"os"
 
 	"github.com/dutchcoders/go-clamd"
 )
 
+// Ensure AntivirusServiceImpl implements both interfaces at compile time
+var (
+	_ personservice.AntivirusService = (*AntivirusServiceImpl)(nil)
+	_ chatservice.AntivirusService   = (*AntivirusServiceImpl)(nil)
+)
+
 type AntivirusServiceImpl struct {
 	clamd *clamd.Clamd
 }
 
-func NewAntivirusService() service.AntivirusService {
-	// Connect to clamd via TCP (Docker exposes 3310)
+// Constructor for person service usecase
+func NewPersonAntivirusService() personservice.AntivirusService {
 	return &AntivirusServiceImpl{
 		clamd: clamd.NewClamd("tcp://127.0.0.1:3310"),
 	}
 }
 
+// Constructor for chat service usecase
+func NewChatAntivirusService() chatservice.AntivirusService {
+	return &AntivirusServiceImpl{
+		clamd: clamd.NewClamd("tcp://127.0.0.1:3310"),
+	}
+}
+
+// Shared method used by both interfaces
 func (s *AntivirusServiceImpl) ScanImage(filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {

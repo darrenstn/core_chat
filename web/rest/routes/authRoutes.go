@@ -4,7 +4,8 @@ import (
 	"core_chat/application/authentication/usecase"
 	"core_chat/web/rest"
 	"core_chat/web/rest/dto"
-	"core_chat/web/rest/util"
+	restutil "core_chat/web/rest/util"
+	webutil "core_chat/web/util"
 
 	// "encoding/json"
 
@@ -38,18 +39,18 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	util.SetAuthCookie(w, result.Token, result.Expiration)
+	restutil.SetAuthCookie(w, result.Token, result.Expiration)
 
 	rest.SendResponse(w, 200, "Login success")
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	util.ClearAuthCookie(w)
+	restutil.ClearAuthCookie(w)
 	rest.SendResponse(w, 200, "Logout success")
 }
 
 func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	identifier, ok := util.GetIdentifier(r)
+	identifier, ok := webutil.GetIdentifier(r)
 
 	if !ok {
 		rest.SendResponse(w, http.StatusUnauthorized, "Unauthorized")
@@ -62,7 +63,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	util.SetAuthCookie(w, result.Token, result.Expiration)
+	restutil.SetAuthCookie(w, result.Token, result.Expiration)
 
 	rest.SendResponse(w, 200, "Refresh Token Success")
 }

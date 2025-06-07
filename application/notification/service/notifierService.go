@@ -3,7 +3,5 @@ package service
 import "core_chat/application/notification/dto"
 
 type NotifierService interface {
-	Send(input dto.SendNotificationInput) error
-	IsOnline(identifier string) bool
-	SetWebSocketManager(ws WebSocketManager)
+	SendResponse(input dto.ServerResponse, receiver string, wsManager WebSocketManager) error
 }

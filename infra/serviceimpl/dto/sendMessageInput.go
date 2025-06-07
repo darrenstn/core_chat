@@ -1,6 +1,6 @@
 package dto
 
-type SendNotificationInput struct {
+type SendMessageInput struct {
 	Receiver      string `json:"receiver"`
 	Sender        string `json:"sender"`
 	Type          string `json:"type"`

@@ -1,8 +1,9 @@
 package service
 
+import "core_chat/application/websocket/service"
+
 type WebSocketManager interface {
-	SetRouter(router WebSocketRouter)
-	AddClient(identifier string, conn WebSocketConn)
+	AddClient(identifier string, conn service.WebSocketConn)
 	Send(identifier string, data []byte) error
 	IsOnline(identifier string) bool
 	JoinRoom(chatID, userID string)

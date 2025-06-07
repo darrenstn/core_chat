@@ -1,15 +1,26 @@
 package serviceimpl
 
 import (
-	"core_chat/application/websocket/service"
+	chatservice "core_chat/application/chat/service"
+	notificationservice "core_chat/application/notification/service"
+	postservice "core_chat/application/post/service"
+	wsservice "core_chat/application/websocket/service"
 	"errors"
+	"sort"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
+var (
+	_ wsservice.WebSocketManager           = (*WebSocketManagerImpl)(nil)
+	_ chatservice.WebSocketManager         = (*WebSocketManagerImpl)(nil)
+	_ postservice.WebSocketManager         = (*WebSocketManagerImpl)(nil)
+	_ notificationservice.WebSocketManager = (*WebSocketManagerImpl)(nil)
+)
+
 type connection struct {
-	conn *websocket.Conn
+	conn wsservice.WebSocketConn
 	mu   sync.Mutex // Prevent concurrent writes
 }
 
@@ -17,17 +28,54 @@ type WebSocketManagerImpl struct {
 	clients   map[string]*connection
 	chatRooms map[string]map[string]bool // chatID -> userID set
 	lock      sync.RWMutex
-	router    service.WebSocketRouter
+	router    wsservice.WebSocketRouter
 }
 
-func NewWebSocketManager(router service.WebSocketRouter) *WebSocketManagerImpl {
-	return &WebSocketManagerImpl{
-		clients: make(map[string]*connection),
-		router:  router,
+func NewWebSocketManager(_ wsservice.WebSocketRouter) wsservice.WebSocketManager {
+	return GetWebSocketManager()
+}
+
+var (
+	once      sync.Once
+	singleton *WebSocketManagerImpl
+)
+
+// this must be called once early, e.g. during main/init/DI
+func InitWebSocketManagerImpl(router wsservice.WebSocketRouter) {
+	once.Do(func() {
+		singleton = &WebSocketManagerImpl{
+			clients:   make(map[string]*connection),
+			chatRooms: make(map[string]map[string]bool),
+			router:    router,
+		}
+	})
+}
+
+func GetWebSocketManager() *WebSocketManagerImpl {
+	if singleton == nil {
+		panic("WebSocketManager is not initialized. Call InitWebSocketManager first.")
 	}
+	return singleton
 }
 
-func (wsm *WebSocketManagerImpl) AddClient(identifier string, conn *websocket.Conn) {
+// Factory methods
+func NewChatWebSocketManager(_ wsservice.WebSocketRouter) chatservice.WebSocketManager {
+	return GetWebSocketManager()
+}
+
+func NewPostWebSocketManager(_ wsservice.WebSocketRouter) postservice.WebSocketManager {
+	return GetWebSocketManager()
+}
+
+func NewNotificationWebSocketManager(_ wsservice.WebSocketRouter) notificationservice.WebSocketManager {
+	return GetWebSocketManager()
+}
+
+func (wsm *WebSocketManagerImpl) SetRouter(router wsservice.WebSocketRouter) {
+	wsm.router = router
+}
+
+func (wsm *WebSocketManagerImpl) AddClient(identifier string, conn wsservice.WebSocketConn) {
 	wsm.lock.Lock()
 	wsm.clients[identifier] = &connection{conn: conn}
 	wsm.lock.Unlock()
@@ -54,7 +102,7 @@ func (wsm *WebSocketManagerImpl) IsOnline(identifier string) bool {
 	return ok
 }
 
-func (wsm *WebSocketManagerImpl) listen(identifier string, conn *websocket.Conn) {
+func (wsm *WebSocketManagerImpl) listen(identifier string, conn wsservice.WebSocketConn) {
 	defer func() {
 		conn.Close()
 		wsm.lock.Lock()
@@ -74,28 +122,34 @@ func (wsm *WebSocketManagerImpl) listen(identifier string, conn *websocket.Conn)
 	}
 }
 
-func (wsm *WebSocketManagerImpl) JoinRoom(chatID, userID string) {
+func (wsm *WebSocketManagerImpl) JoinRoom(chatID, identifier string) {
 	wsm.lock.Lock()
 	defer wsm.lock.Unlock()
 	if wsm.chatRooms[chatID] == nil {
 		wsm.chatRooms[chatID] = make(map[string]bool)
 	}
-	wsm.chatRooms[chatID][userID] = true
+	wsm.chatRooms[chatID][identifier] = true
 }
 
-func (wsm *WebSocketManagerImpl) LeaveRoom(chatID, userID string) {
+func (wsm *WebSocketManagerImpl) GenerateChatID(person1, person2 string) string {
+	chatID := []string{person1, person2}
+	sort.Strings(chatID)
+	return chatID[0] + ":" + chatID[1]
+}
+
+func (wsm *WebSocketManagerImpl) LeaveRoom(chatID, identifier string) {
 	wsm.lock.Lock()
 	defer wsm.lock.Unlock()
 	if room, ok := wsm.chatRooms[chatID]; ok {
-		delete(room, userID)
+		delete(room, identifier)
 		if len(room) == 0 {
 			delete(wsm.chatRooms, chatID)
 		}
 	}
 }
 
-func (wsm *WebSocketManagerImpl) IsUserInRoom(chatID, userID string) bool {
+func (wsm *WebSocketManagerImpl) IsPersonInRoom(chatID, identifier string) bool {
 	wsm.lock.RLock()
 	defer wsm.lock.RUnlock()
-	return wsm.chatRooms[chatID][userID]
+	return wsm.chatRooms[chatID][identifier]
 }

@@ -8,11 +8,20 @@ upload/*
 # Allow specific subdirectories and files
 !upload/image/
 !upload/image/profile/
+!upload/image/chat/
 !upload/image/profile/default.png
 
 # Re-ignore everything else in profile
 upload/image/profile/*
 !upload/image/profile/default.png
 
+# Ignore all files inside chat
+upload/image/chat/*
+
+# Optional: Keep the folder when empty
+!upload/image/chat/.gitkeep
+
 # Explicitly ignore tempprofile directory
 upload/image/tempprofile/
+
+firebase/*

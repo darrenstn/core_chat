@@ -1,14 +1,24 @@
 package serviceimpl
 
 import (
-	"core_chat/application/person/service"
+	chatservice "core_chat/application/chat/service"
+	personservice "core_chat/application/person/service"
 	"net/mail"
 	"regexp"
 )
 
+var (
+	_ personservice.ValidatorService = (*ValidatorService)(nil)
+	_ chatservice.ValidatorService   = (*ValidatorService)(nil)
+)
+
 type ValidatorService struct{}
 
-func NewValidatorService() service.ValidatorService {
+func NewPersonValidatorService() personservice.ValidatorService {
+	return &ValidatorService{}
+}
+
+func NewChatValidatorService() chatservice.ValidatorService {
 	return &ValidatorService{}
 }
 

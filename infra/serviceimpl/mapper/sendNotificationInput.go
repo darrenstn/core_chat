@@ -1,12 +1,12 @@
 package mapper
 
 import (
-	appdto "core_chat/application/notification/dto"
-	infradto "core_chat/infra/serviceimpl/dto"
+	appchatdto "core_chat/application/chat/dto"
+	appnotificationdto "core_chat/application/pushnotification/dto"
 )
 
-func ToInfraSendNotificationInput(input appdto.SendNotificationInput) infradto.SendNotificationInput {
-	return infradto.SendNotificationInput{
+func ToSendNotificationInput(input appchatdto.SendMessageInput) appnotificationdto.SendNotificationInput {
+	return appnotificationdto.SendNotificationInput{
 		Receiver:      input.Receiver,
 		Sender:        input.Sender,
 		Type:          input.Type,
