@@ -79,7 +79,10 @@ func configure() http.Handler {
 	chatAntivirusService := serviceimpl.NewChatAntivirusService()
 	getChatImageUC := chatUC.NewGetChatImageUseCase(chatRepo)
 	uploadChatImageUC := chatUC.NewUploadChatImageUseCase(chatAntivirusService, chatRepo, chatValidatorService)
-	chatHandler := routes.NewChatImageHandler(uploadChatImageUC, getChatImageUC)
+	chatImageHandler := routes.NewChatImageHandler(uploadChatImageUC, getChatImageUC)
+
+	getChatMessageUC := chatUC.NewGetChatMessageUseCase(chatRepo)
+	chatHandler := routes.NewChatHandler(*getChatMessageUC)
 
 	var wsInitRouter websocketApp.WebSocketRouter
 	serviceimpl.InitWebSocketManagerImpl(wsInitRouter)
@@ -113,8 +116,10 @@ func configure() http.Handler {
 	r.HandleFunc("/person/profile", routes.Authenticate(personHandler.GetProfile, "user", false)).Methods("GET")
 	r.HandleFunc("/person/profile/image", routes.Authenticate(personHandler.GetProfileImage, "user", false)).Methods("GET")
 
-	r.HandleFunc("/chat/image", routes.Authenticate(chatHandler.UploadChatImage, "user", true)).Methods("POST")
-	r.HandleFunc("/chat/image", routes.Authenticate(chatHandler.GetChatImage, "user", true)).Methods("GET")
+	r.HandleFunc("/chat/image", routes.Authenticate(chatImageHandler.UploadChatImage, "user", true)).Methods("POST")
+	r.HandleFunc("/chat/image", routes.Authenticate(chatImageHandler.GetChatImage, "user", true)).Methods("GET")
+
+	r.HandleFunc("/chat/message", routes.Authenticate(chatHandler.GetChatMessage, "user", true)).Methods("GET")
 
 	r.HandleFunc("/ws", routes.Authenticate(wsHandler.HandleWebSocketConn, "user", true)).Methods("GET")
 
