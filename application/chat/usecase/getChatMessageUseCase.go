@@ -17,12 +17,11 @@ func NewGetChatMessageUseCase(repo repository.ChatRepository) *GetChatMessageUse
 
 func (uc *GetChatMessageUseCase) Execute(messageID, identifier string) (*entity.Message, error) {
 	result, err := uc.ChatRepo.FindChatMessage(messageID, identifier)
-
 	if err != nil {
 		return nil, err
 	}
 
-	if result.ReadAt != "" {
+	if result.ReadAt == "" {
 		if result.Receiver == identifier {
 			err = uc.ChatRepo.MarkMessageAsRead(result.ID, result.Receiver)
 			if err != nil {

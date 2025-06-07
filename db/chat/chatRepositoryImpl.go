@@ -100,7 +100,7 @@ func (r *chatRepositoryImpl) FindChatMessage(msgID, identifier string) (*entity.
 	}
 
 	err = r.db.QueryRow("SELECT id, sender, receiver, type, title, body, payload, created_at, read_at FROM chat_message WHERE id = ? AND (sender = ? OR receiver = ?)", msgIDInt, identifier, identifier).
-		Scan(id, &message.Sender, &message.Receiver, &message.Type, &message.Title, &message.Body, &message.Payload, &createdAt, &readAt)
+		Scan(&id, &message.Sender, &message.Receiver, &message.Type, &message.Title, &message.Body, &message.Payload, &createdAt, &readAt)
 
 	if err != nil {
 		return nil, err
@@ -113,7 +113,6 @@ func (r *chatRepositoryImpl) FindChatMessage(msgID, identifier string) (*entity.
 	} else {
 		message.ReadAt = ""
 	}
-
 	return &message, nil
 }
 

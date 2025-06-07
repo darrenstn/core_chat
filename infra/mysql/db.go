@@ -8,7 +8,7 @@ import (
 )
 
 func Connect() *sql.DB {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/core_chat")
+	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/core_chat?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}

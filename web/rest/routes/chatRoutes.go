@@ -26,7 +26,7 @@ func (h *ChatHandler) GetChatMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msgID := r.FormValue("message_id")
+	msgID := r.URL.Query().Get("message_id")
 	if msgID == "" {
 		rest.SendResponse(w, 400, "Message ID is required")
 		return
@@ -36,6 +36,7 @@ func (h *ChatHandler) GetChatMessage(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		rest.SendResponse(w, 400, "Get chat message failed: "+err.Error())
+		return
 	}
 
 	messageResult := mapper.ToMessageResult(message)
