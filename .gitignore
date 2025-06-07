@@ -25,3 +25,5 @@ upload/image/chat/*
 upload/image/tempprofile/
 
 firebase/*
+
+!firebase/.gitkeep
