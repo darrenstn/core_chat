@@ -5,10 +5,12 @@ import (
 	chatUC "core_chat/application/chat/usecase"
 	notificationUC "core_chat/application/notification/usecase"
 	personUC "core_chat/application/person/usecase"
+	postUC "core_chat/application/post/usecase"
 	websocketApp "core_chat/application/websocket/service"
 	"core_chat/db/authentication"
 	"core_chat/db/chat"
 	"core_chat/db/person"
+	"core_chat/db/post"
 	"core_chat/infra/mysql"
 	"core_chat/infra/serviceimpl"
 	"core_chat/web/rest"
@@ -85,6 +87,12 @@ func configure() http.Handler {
 	wsManager.SetRouter(wsRouter)
 	wsHandler := ws.NewWebSocketHandler(wsManager)
 
+	postRepo := post.NewPostRepository(db)
+	createPostUC := postUC.NewCreatePostUseCase(postRepo)
+	getAllPostsUC := postUC.NewGetAllPostsUseCase(postRepo)
+	getPostByIDUC := postUC.NewGetPostByIDUseCase(postRepo)
+	postHandler := routes.NewPostHandler(createPostUC, getPostByIDUC, getAllPostsUC)
+
 	r := mux.NewRouter()
 	r.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
 	r.HandleFunc("/auth/logout", routes.Authenticate(authHandler.Logout, "user", false)).Methods("POST")
@@ -98,10 +106,13 @@ func configure() http.Handler {
 
 	r.HandleFunc("/chat/image", routes.Authenticate(chatImageHandler.UploadChatImage, "user", true)).Methods("POST")
 	r.HandleFunc("/chat/image", routes.Authenticate(chatImageHandler.GetChatImage, "user", true)).Methods("GET")
-
 	r.HandleFunc("/chat/message", routes.Authenticate(chatHandler.GetChatMessage, "user", true)).Methods("GET")
 
 	r.HandleFunc("/ws", routes.Authenticate(wsHandler.HandleWebSocketConn, "user", true)).Methods("GET")
+
+	r.HandleFunc("/post", routes.Authenticate(postHandler.CreatePost, "user", true)).Methods("POST")
+	r.HandleFunc("/post", routes.Authenticate(postHandler.GetPostByID, "user", true)).Methods("GET")
+	r.HandleFunc("/posts", routes.Authenticate(postHandler.GetAllPosts, "user", true)).Methods("GET")
 
 	r.HandleFunc("/protected/email", routes.Authenticate(func(w http.ResponseWriter, r *http.Request) {
 		rest.SendResponse(w, 200, "Login and Email OK!")
