@@ -27,6 +27,10 @@ func (uc *GetChatMessageUseCase) Execute(messageID, identifier string) (*entity.
 			if err != nil {
 				return nil, err
 			}
+			result, err = uc.ChatRepo.FindChatMessage(messageID, identifier)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

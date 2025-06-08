@@ -54,14 +54,19 @@ func (uc *SendImageUseCase) Execute(input chatdto.SendMessageInput, imagePath, i
 		chatID := uc.wsManager.GenerateChatID(input.Receiver, input.Sender)
 		if uc.wsManager.IsPersonInRoom(chatID, input.Receiver) {
 			// Same room: send real-time message
-			uc.dmService.Execute(input, uc.wsManager)
+			err = uc.dmService.Execute(input, uc.wsManager)
+			if err != nil {
+				return err
+			}
+			uc.repo.MarkMessageAsRead(messageID, input.Receiver)
+			return err
 		}
 		input.Type = "chat_notification"
 		input.Title = "New Message"
 		input.Body = ""
 		input.Payload = messageID
 		// Online but not in the same room: send WebSocket notification
-		uc.msgNotifier.ExecuteViaWebSocket(input, uc.wsManager)
+		return uc.msgNotifier.ExecuteViaWebSocket(input, uc.wsManager)
 	}
 
 	// Step 4: Receiver is offline, fallback to push notification
