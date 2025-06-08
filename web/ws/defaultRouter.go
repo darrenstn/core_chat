@@ -95,8 +95,6 @@ func (r *DefaultRouter) Route(identifier, tokenStr string, data []byte) {
 			return
 		}
 		r.ServerResponseUC.Execute(identifier, "Join room success", "server_success_response")
-		// Call a use case or directly use WebSocketManager
-		// Example: r.WebSocketManager.JoinRoom(input.ChatID, identifier)
 
 	case "leave_room":
 		var input struct {

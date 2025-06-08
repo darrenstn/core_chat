@@ -2,4 +2,4 @@ package config
 
 import "time"
 
-const AccessTokenExpiration = 5 * time.Minute
+const AccessTokenExpiration = 10080 * time.Minute //7 days
