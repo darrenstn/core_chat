@@ -55,12 +55,17 @@ func loadEnv() {
 func configure() http.Handler {
 	db := mysql.Connect()
 
+	var wsInitRouter websocketApp.WebSocketRouter
+	serviceimpl.InitWebSocketManagerImpl(wsInitRouter)
+
 	authPersonRepo := authentication.NewPersonRepository(db)
 	tokenService := serviceimpl.NewJWTTokenService()
 	hashService := serviceimpl.NewBcryptHashService()
-	loginUC := authUC.NewLoginUseCase(authPersonRepo, tokenService, hashService)
-	refreshUC := authUC.NewRefreshTokenUseCase(authPersonRepo, tokenService)
-	authHandler := routes.NewAuthHandler(loginUC, refreshUC)
+	authWsManager := serviceimpl.NewAuthenticationWebSocketManager(wsInitRouter)
+	loginUC := authUC.NewLoginUseCase(authPersonRepo, tokenService, hashService, authWsManager)
+	refreshUC := authUC.NewRefreshTokenUseCase(authPersonRepo, tokenService, authWsManager)
+	logoutUC := authUC.NewLogoutUseCase(authWsManager)
+	authHandler := routes.NewAuthHandler(loginUC, logoutUC, refreshUC)
 
 	personPersonRepo := person.NewPersonRepository(db)
 	personValidatorService := serviceimpl.NewPersonValidatorService()
@@ -84,8 +89,6 @@ func configure() http.Handler {
 	getChatMessageUC := chatUC.NewGetChatMessageUseCase(chatRepo)
 	chatHandler := routes.NewChatHandler(*getChatMessageUC)
 
-	var wsInitRouter websocketApp.WebSocketRouter
-	serviceimpl.InitWebSocketManagerImpl(wsInitRouter)
 	chatWsManager := serviceimpl.NewChatWebSocketManager(wsInitRouter)
 	firebaseCredPath := os.Getenv("FIREBASE_CREDENTIAL_PATH")
 	pushNotifierService, _ := serviceimpl.NewFirebasePushNotifier(firebaseCredPath)
@@ -107,7 +110,7 @@ func configure() http.Handler {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
-	r.HandleFunc("/auth/logout", authHandler.Logout).Methods("POST")
+	r.HandleFunc("/auth/logout", routes.Authenticate(authHandler.Logout, "user", false)).Methods("POST")
 	r.HandleFunc("/auth/token/refresh", routes.Authenticate(authHandler.RefreshToken, "user", false)).Methods("POST")
 
 	r.HandleFunc("/person/identifier", personHandler.CheckIdentifierAvailability).Methods("GET")

@@ -1,5 +1,5 @@
 package service
 
 type WebSocketRouter interface {
-	Route(identifier string, data []byte)
+	Route(identifier, token string, data []byte)
 }

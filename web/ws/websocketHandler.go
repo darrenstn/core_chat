@@ -29,6 +29,13 @@ func (wsh *WebSocketHandler) HandleWebSocketConn(w http.ResponseWriter, r *http.
 		return
 	}
 
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		http.Error(w, "Missing token", http.StatusUnauthorized)
+		log.Printf("WebSocket upgrade failed: token missing")
+		return
+	}
+
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}
@@ -40,5 +47,5 @@ func (wsh *WebSocketHandler) HandleWebSocketConn(w http.ResponseWriter, r *http.
 
 	var wsConn service.WebSocketConn = &adapter.GorillaConn{Conn: conn}
 
-	wsh.wsManager.AddClient(identifier, wsConn)
+	wsh.wsManager.AddClient(identifier, wsConn, cookie.Value)
 }

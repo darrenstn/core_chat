@@ -14,11 +14,12 @@ import (
 
 type AuthHandler struct {
 	LoginUC   *usecase.LoginUseCase
+	LogoutUC  *usecase.LogoutUseCase
 	RefreshUC *usecase.RefreshTokenUseCase
 }
 
-func NewAuthHandler(loginUC *usecase.LoginUseCase, refreshUC *usecase.RefreshTokenUseCase) *AuthHandler {
-	return &AuthHandler{LoginUC: loginUC, RefreshUC: refreshUC}
+func NewAuthHandler(loginUC *usecase.LoginUseCase, logoutUC *usecase.LogoutUseCase, refreshUC *usecase.RefreshTokenUseCase) *AuthHandler {
+	return &AuthHandler{LoginUC: loginUC, LogoutUC: logoutUC, RefreshUC: refreshUC}
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +46,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	identifier, ok := webutil.GetIdentifier(r)
+
+	if !ok {
+		rest.SendResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	h.LogoutUC.Execute(identifier)
 	restutil.ClearAuthCookie(w)
 	rest.SendResponse(w, 200, "Logout success")
 }

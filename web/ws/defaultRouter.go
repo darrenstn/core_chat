@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
+
+	"github.com/golang-jwt/jwt"
 )
 
 type DefaultRouter struct {
@@ -29,7 +31,16 @@ func NewDefaultRouter(sendMessageUC *chatapp.SendMessageUseCase, sendImageUC *ch
 	}
 }
 
-func (r *DefaultRouter) Route(identifier string, data []byte) {
+func (r *DefaultRouter) Route(identifier, tokenStr string, data []byte) {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		return []byte("test"), nil
+	})
+
+	if err != nil || !token.Valid {
+		r.ServerResponseUC.Execute(identifier, "Token not valid", "server_error_response")
+		return
+	}
+
 	var base struct {
 		Type string `json:"type"` // e.g., "chat_message", "typing", etc.
 	}
