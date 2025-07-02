@@ -67,7 +67,8 @@ func (h *ChatImageHandler) UploadChatImage(w http.ResponseWriter, r *http.Reques
 	filename := uuid.NewString()
 
 	// Save the file to disk
-	savedPath, err := restutil.SaveImage(file, filename, "./image/chat", ext)
+	imageChatDir := os.Getenv("IMAGE_CHAT_DIR")
+	savedPath, err := restutil.SaveImage(file, filename, imageChatDir, ext)
 	if err != nil {
 		rest.SendResponse(w, 500, "Failed to save image on server")
 		return

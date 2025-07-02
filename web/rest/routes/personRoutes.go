@@ -83,7 +83,9 @@ func (h *PersonHandler) Register(w http.ResponseWriter, r *http.Request) {
 			"image/png":  ".png",
 		}[contentType]
 
-		picturePath, err = util.SaveImage(file, filename, "./image/tempprofile", ext)
+		imageTempProfileDir := os.Getenv("IMAGE_TEMP_PROFILE_DIR")
+
+		picturePath, err = util.SaveImage(file, filename, imageTempProfileDir, ext)
 		if err != nil {
 			rest.SendResponse(w, 500, "Failed to save image")
 			return
